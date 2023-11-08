@@ -35,9 +35,9 @@ class PIDController(object):
         self.e2 = np.zeros(size)
         # ADJUST PARAMETERS BELOW
         delay = 0
-        self.Kp = 0
-        self.Ki = 0
-        self.Kd = 0
+        self.Kp = 32
+        self.Ki = 0.5
+        self.Kd = 0.1
         self.y = deque(np.zeros(size), maxlen=delay + 1)
 
     def set_delay(self, delay):
@@ -52,7 +52,41 @@ class PIDController(object):
         @param sensor: current values from sensor
         @return control signal
         '''
-        # YOUR CODE HERE
+
+        currentError = target - sensor
+
+        # Proportional term
+        p_term = self.Kp * currentError
+
+        # Integral term
+        i_term = self.Ki * self.dt * currentError
+
+        # Derivative term
+        d_term = self.Kd * currentError / self.dt
+
+        # Derivative-related term. This is based on last error (e1)
+        derivative_e1 = (self.Kp + 2 * self.Kd / self.dt) * self.e1
+
+        # Derivative-related term based on the error two steps ago, which will be e2
+        derivative_e2 = (self.Kd / self.dt) * self.e2
+
+        u_new = p_term + i_term + d_term - derivative_e1 + derivative_e2
+        self.u += u_new
+
+        # Update past errors
+        self.e2 = self.e1
+        self.e1 = currentError
+        
+        # Predict value
+        curr_signal = self.u
+        curr_difference = self.u - sensor
+        past_predicted_value = self.y.popleft()
+        past_difference = past_predicted_value - sensor
+        average_difference = (past_difference + curr_difference) / 2
+        scaled_difference = average_difference * self.dt
+        prediction = curr_signal + scaled_difference
+
+        self.y.append(prediction)
 
         return self.u
 
