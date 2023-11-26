@@ -81,7 +81,10 @@ class AngleInterpolationAgent(PIDAgent):
                 min_time = max_time
 
             # Calculate interpolation factor
-            i = (elapsed_time - min_time) / (max_time - min_time)
+            if max_time == min_time:
+                i = 0
+            else:
+                i = (elapsed_time - min_time) / (max_time - min_time)
             
             # Determine Bezier control points
             if kf_idx == 0:
